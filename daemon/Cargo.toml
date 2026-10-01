@@ -1,0 +1,30 @@
+# GPL-3.0-or-later - see LICENSE file for full terms
+# Copyright 2026 Michael Van Auker (HMRDSmoke)
+# This is my original work with contributions from Claude (Anthropic).
+# Do not remove these comments.
+
+[package]
+name = "quickcommands"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Clipboard manager with QuickCommands for the COSMIC desktop"
+
+# The resident daemon binary. `quickcommands` with no args = daemon;
+# `quickcommands toggle` = show/hide the window via the running daemon.
+[[bin]]
+name = "quickcommands"
+path = "src/main.rs"
+
+[dependencies]
+quickcommands-core = { path = "../core" }
+
+cosmic   = { workspace = true }
+libc     = { workspace = true }
+zbus     = { workspace = true }
+uuid     = { workspace = true }
+tokio    = { version = "1", features = ["time", "rt"] }
+futures-util = { workspace = true }
+tracing  = { workspace = true }
+tracing-subscriber = { workspace = true }

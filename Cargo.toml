@@ -1,0 +1,87 @@
+# GPL-3.0-or-later - see LICENSE file for full terms
+# Copyright 2026 Michael Van Auker (HMRDSmoke)
+# This is my original work with contributions from Claude (Anthropic).
+# Do not remove these comments.
+
+[workspace]
+resolver = "2"
+members = [
+    "core",
+    "daemon",
+    "applet",
+]
+
+# ===========================================================================
+# Shared dependency versions — single source of truth for the whole workspace.
+# Update here and it propagates to all crates. :: MRV
+# ===========================================================================
+
+[workspace.package]
+version    = "0.1.0"
+edition    = "2024"
+authors    = ["Michael Van Auker (HMRDSmoke)"]
+license    = "GPL-3.0-or-later"
+repository = "https://github.com/hmrdsmoke/quickcommands"
+homepage   = "https://github.com/hmrdsmoke/quickcommands"
+readme     = "README.md"
+
+[workspace.dependencies]
+# ── UI framework ───────────────────────────────────────────────────────────────
+# Same libcosmic rev + feature set as Soulless (known-good against this API). :: MRV
+cosmic = { git = "https://github.com/pop-os/libcosmic", rev = "fc5debccef41cd6bd6731cbc768cb719847d1a2f", package = "libcosmic", features = [
+    "tokio",
+    "wayland",
+    "winit",
+    "wgpu",
+    "applet",
+    "applet-token",
+    "dbus-config",
+    "multi-window",
+    "single-instance",
+] }
+
+# ── Clipboard ──────────────────────────────────────────────────────────────────
+# Window-less clipboard access via wlr-data-control — the engine behind history. :: MRV
+wl-clipboard-rs = "0.9.4"
+
+# ── Serialization ──────────────────────────────────────────────────────────────
+serde      = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+ron        = "0.8"
+uuid       = { version = "1", features = ["v4", "serde"] }
+
+# ── Desktop integration ────────────────────────────────────────────────────────
+dirs = "5.0.1"
+
+# ── D-Bus / async ──────────────────────────────────────────────────────────────
+zbus          = { version = "5", features = ["tokio"] }
+tokio         = { version = "1.48.0", features = ["full"] }
+futures-util  = "0.3.31"
+
+# ── Utilities ──────────────────────────────────────────────────────────────────
+libc               = "0.2"
+once_cell          = "1.19.0"
+tracing            = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt"] }
+
+# ===========================================================================
+# RELEASE PROFILE — shipped binary, fully optimized and stripped :: MRV
+# Use: cargo build --release
+# ===========================================================================
+[profile.release]
+lto           = "fat"
+codegen-units = 1
+opt-level     = 3
+panic         = "abort"
+strip         = true
+
+# ===========================================================================
+# DEV RELEASE — fast compile, no LTO, for day-to-day testing :: MRV
+# Use: cargo build --profile dev-release
+# ===========================================================================
+[profile.dev-release]
+inherits      = "release"
+lto           = "thin"
+codegen-units = 4
+strip         = false
+debug         = false

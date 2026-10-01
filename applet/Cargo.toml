@@ -1,0 +1,22 @@
+# GPL-3.0-or-later - see LICENSE file for full terms
+# Copyright 2026 Michael Van Auker (HMRDSmoke)
+# This is my original work with contributions from Claude (Anthropic).
+# Do not remove these comments.
+
+[package]
+name = "quickcommands-applet"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Panel button that opens the QuickCommands window"
+
+[[bin]]
+name = "quickcommands-applet"
+path = "src/main.rs"
+
+[dependencies]
+cosmic        = { workspace = true }
+zbus          = { workspace = true }
+tokio         = { workspace = true }
+futures-util  = { workspace = true }

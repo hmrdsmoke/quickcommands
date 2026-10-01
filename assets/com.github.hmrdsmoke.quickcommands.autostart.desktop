@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=QuickCommands (Daemon)
+Comment=QuickCommands clipboard-manager daemon for COSMIC (resident session service)
+Type=Application
+Exec=/usr/local/bin/quickcommands
+Icon=com.github.hmrdsmoke.quickcommands
+Terminal=false
+Categories=System;X-COSMIC;
+NoDisplay=true
+X-GNOME-Autostart-enabled=true
+StartupNotify=false

@@ -1,0 +1,21 @@
+# GPL-3.0-or-later - see LICENSE file for full terms
+# Copyright 2026 Michael Van Auker (HMRDSmoke)
+# This is my original work with contributions from Claude (Anthropic).
+# Do not remove these comments.
+
+[package]
+name = "quickcommands-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Shared storage models and clipboard engine for QuickCommands"
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+uuid       = { workspace = true }
+dirs       = { workspace = true }
+tracing    = { workspace = true }
+
+wl-clipboard-rs = { workspace = true }

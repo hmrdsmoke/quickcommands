@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=QuickCommands Applet
+Comment=Clipboard manager and saved commands
+Type=Application
+Icon=com.github.hmrdsmoke.quickcommands
+Exec=quickcommands-applet
+Terminal=false
+StartupNotify=true
+Categories=COSMIC
+Keywords=COSMIC;clipboard;
+NoDisplay=true
+X-CosmicApplet=true
+X-CosmicHoverPopup=Auto
+MimeType=
