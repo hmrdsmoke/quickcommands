@@ -494,8 +494,36 @@ impl QuickCommands {
         // Absorb clicks on the window so they don't dismiss it.
         let window_zone = cosmic::iced::widget::mouse_area(card).on_press(Message::Noop);
 
-        // A little breathing room from the top edge; top-center placement.
+        // A little breathing room from the panel edge.
         let gap = spacing.space_s as f32;
+
+        // Place the window next to the applet (Soulless pattern). Read where the
+        // applet lives from the live panel config and map bar-edge + wing to an
+        // alignment within the full-screen surface:
+        //   - horizontal bar (Top/Bottom): wing runs left/right, edge is top/bottom
+        //   - vertical bar  (Left/Right):  wing runs top/bottom,  edge is left/right
+        // Center wing -> centered on that axis. :: MRV
+        use cosmic::iced::platform_specific::shell::commands::layer_surface::Anchor as LSAnchor;
+        use cosmic::iced::Alignment;
+        let (edge, wing) = crate::placement::applet_position();
+        let horizontal_bar = matches!(edge, LSAnchor::TOP | LSAnchor::BOTTOM);
+        let (align_x, align_y) = if horizontal_bar {
+            let ax = match wing {
+                crate::placement::Wing::First => Alignment::Start,
+                crate::placement::Wing::Second => Alignment::End,
+                crate::placement::Wing::Center => Alignment::Center,
+            };
+            let ay = if matches!(edge, LSAnchor::TOP) { Alignment::Start } else { Alignment::End };
+            (ax, ay)
+        } else {
+            let ay = match wing {
+                crate::placement::Wing::First => Alignment::Start,
+                crate::placement::Wing::Second => Alignment::End,
+                crate::placement::Wing::Center => Alignment::Center,
+            };
+            let ax = if matches!(edge, LSAnchor::LEFT) { Alignment::Start } else { Alignment::End };
+            (ax, ay)
+        };
 
         cosmic::iced::widget::stack![
             // Background dismiss layer: any click outside the window closes it.
@@ -505,10 +533,10 @@ impl QuickCommands {
                     .height(cosmic::iced::Length::Fill)
             )
             .on_press(Message::Dismiss),
-            // The window itself, aligned top-center within the full-screen surface.
+            // The window itself, aligned to the applet corner within the surface.
             widget::container(window_zone)
-                .align_x(cosmic::iced::Alignment::Center)
-                .align_y(cosmic::iced::Alignment::Start)
+                .align_x(align_x)
+                .align_y(align_y)
                 .padding(cosmic::iced::Padding::from(gap))
                 .width(cosmic::iced::Length::Fill)
                 .height(cosmic::iced::Length::Fill)

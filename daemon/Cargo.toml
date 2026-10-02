@@ -24,6 +24,7 @@ cosmic   = { workspace = true }
 libc     = { workspace = true }
 zbus     = { workspace = true }
 uuid     = { workspace = true }
+dirs     = { workspace = true }
 tokio    = { version = "1", features = ["time", "rt"] }
 futures-util = { workspace = true }
 tracing  = { workspace = true }
