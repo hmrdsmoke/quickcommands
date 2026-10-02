@@ -1,0 +1,35 @@
+{
+  "sections": [
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Git",
+      "collapsed": false,
+      "commands": [
+        { "id": "00000000-0000-0000-0000-000000000011", "label": "Status", "command": "git status" },
+        { "id": "00000000-0000-0000-0000-000000000012", "label": "Add all", "command": "git add -A" },
+        { "id": "00000000-0000-0000-0000-000000000013", "label": "Commit", "command": "git commit -m \"\"" },
+        { "id": "00000000-0000-0000-0000-000000000014", "label": "Push", "command": "git push" },
+        { "id": "00000000-0000-0000-0000-000000000015", "label": "Pull", "command": "git pull" }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "name": "Cargo",
+      "collapsed": false,
+      "commands": [
+        { "id": "00000000-0000-0000-0000-000000000021", "label": "Check", "command": "cargo check" },
+        { "id": "00000000-0000-0000-0000-000000000022", "label": "Run", "command": "cargo run" },
+        { "id": "00000000-0000-0000-0000-000000000023", "label": "Clippy", "command": "cargo clippy --all-targets" }
+      ]
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "name": "MyProject",
+      "collapsed": true,
+      "commands": [
+        { "id": "00000000-0000-0000-0000-000000000031", "label": "Build", "command": "cd ~/Projects/myproject && make release" },
+        { "id": "00000000-0000-0000-0000-000000000032", "label": "Install", "command": "cd ~/Projects/myproject && make install" }
+      ]
+    }
+  ]
+}

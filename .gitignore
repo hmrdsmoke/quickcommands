@@ -1,3 +1,6 @@
 /target
 **/*.rs.bk
 *.pdb
+
+# Personal generated command set (per-user; lives in ~/.local/share/quickcommands/)
+sections.generated.json

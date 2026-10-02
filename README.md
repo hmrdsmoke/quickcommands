@@ -66,6 +66,12 @@ Both are written atomically (temp + rename). A corrupt file is logged and treate
 as empty rather than crashing the daemon. On first run `sections.json` is seeded
 with a starter Git + Cargo set you can edit freely.
 
+See [`sections.example.json`](sections.example.json) for the format. The window
+shows three columns: **Recent** (clipboard history), **Git** (the section named
+`Git`), and **Projects** (every other section). Commands are copied on click, so a
+`cd ~/Projects/foo && make release` entry pastes ready to run. Edit `sections.json`
+and reopen the window to pick up changes.
+
 ## Build
 
 ```sh
