@@ -22,8 +22,8 @@ use quickcommands_core::storage::{Command, History, Sections};
 use quickcommands_core::{clipboard, storage};
 
 // ── Window dimensions ──────────────────────────────────────────────────────────
-pub const WINDOW_WIDTH: f32 = 380.0;
-pub const WINDOW_HEIGHT: f32 = 480.0;
+pub const WINDOW_WIDTH: f32 = 900.0;
+pub const WINDOW_HEIGHT: f32 = 700.0;
 
 // ── D-Bus identity ──────────────────────────────────────────────────────────────
 // Hyphen-free APP_ID is REQUIRED for run_single_instance: cosmic derives a D-Bus
@@ -382,89 +382,131 @@ impl QuickCommands {
             .on_input(Message::SearchChanged)
             .on_clear(Message::SearchChanged(String::new()));
 
-        // ── Recent copies section ──────────────────────────────────────────────
         let needle = self.search.to_lowercase();
-        let mut history_col = widget::column![].spacing(spacing.space_xxs);
-        history_col = history_col.push(section_header("Recent"));
 
+        // ── Column 1: Recent copies ────────────────────────────────────────────
+        let mut recent = widget::column![].spacing(spacing.space_xxs);
+        recent = recent.push(section_header("Recent"));
         let mut shown = 0usize;
         for entry in &self.history.entries {
             if !needle.is_empty() && !entry.text.to_lowercase().contains(&needle) {
                 continue;
             }
-            // Cap the visible list so a huge history doesn't make a mile-long
-            // surface; the filter box reaches the rest.
-            if shown >= 25 {
-                break;
-            }
             shown += 1;
-            history_col = history_col.push(history_row(entry));
+            recent = recent.push(history_row(entry));
         }
         if shown == 0 {
-            history_col = history_col.push(empty_hint(if self.history.entries.is_empty() {
+            recent = recent.push(empty_hint(if self.history.entries.is_empty() {
                 "Nothing copied yet. Copy something and it shows up here."
             } else {
                 "No copies match your filter."
             }));
         }
 
-        // ── QuickCommands sections ─────────────────────────────────────────────
-        let mut commands_col = widget::column![].spacing(spacing.space_xs);
-        for section in &self.sections.sections {
-            // Filter commands within the section.
-            let matches: Vec<&Command> = section
-                .commands
-                .iter()
-                .filter(|c| {
-                    needle.is_empty()
-                        || c.label.to_lowercase().contains(&needle)
-                        || c.command.to_lowercase().contains(&needle)
-                })
-                .collect();
-
-            // When filtering, hide sections with no matches entirely.
-            if !needle.is_empty() && matches.is_empty() {
-                continue;
-            }
-
-            // Section header is a button that toggles collapse.
-            let caret = if section.collapsed { "▸" } else { "▾" };
-            let header = widget::button::custom(
-                widget::row![]
-                    .spacing(spacing.space_xxs)
-                    .push(widget::text(caret))
-                    .push(widget::text::heading(section.name.clone())),
-            )
-            .on_press(Message::ToggleSection(section.id))
-            .class(cosmic::theme::Button::Text)
-            .width(cosmic::iced::Length::Fill);
-
-            commands_col = commands_col.push(header);
-
-            // Show commands unless collapsed (a filter match forces them visible
-            // so you can see what matched).
-            let expanded = !section.collapsed || !needle.is_empty();
-            if expanded {
-                let mut inner = widget::column![].spacing(spacing.space_xxxs);
-                for cmd in matches {
-                    inner = inner.push(command_row(cmd));
+        // ── Column 2: Git ──────────────────────────────────────────────────────
+        // The single section literally named "Git" (case-insensitive). If there
+        // isn't one, the column shows a gentle hint.
+        let mut git = widget::column![].spacing(spacing.space_xs);
+        git = git.push(section_header("Git"));
+        let git_section = self
+            .sections
+            .sections
+            .iter()
+            .find(|s| s.name.eq_ignore_ascii_case("git"));
+        match git_section {
+            Some(sec) => {
+                if let Some(block) = self.section_commands(sec, &needle, spacing) {
+                    git = git.push(block);
+                } else {
+                    git = git.push(empty_hint("No Git commands match your filter."));
                 }
-                commands_col = commands_col.push(widget::container(inner).padding(
-                    cosmic::iced::Padding::from([0.0, 0.0, 0.0, spacing.space_s as f32]),
+            }
+            None => {
+                git = git.push(empty_hint(
+                    "No \"Git\" section yet. Add one in sections.json.",
                 ));
             }
         }
 
-        // Scroll the whole stack so a big history or many sections stay reachable.
-        // Fill inside the fixed-size card below (the card sets the hard bounds).
-        let body = widget::scrollable(
-            widget::column![]
-                .spacing(spacing.space_m)
-                .push(history_col)
-                .push(commands_col),
+        // ── Column 3: Projects ─────────────────────────────────────────────────
+        // Every section EXCEPT the Git one, each as its own labeled group stacked
+        // down the column.
+        let mut projects = widget::column![].spacing(spacing.space_s);
+        projects = projects.push(section_header("Projects"));
+        let mut any_project = false;
+        for sec in self
+            .sections
+            .sections
+            .iter()
+            .filter(|s| !s.name.eq_ignore_ascii_case("git"))
+        {
+            // A collapsible per-section header (toggles like before).
+            let caret = if sec.collapsed { "▸" } else { "▾" };
+            let header = widget::button::custom(
+                widget::row![]
+                    .spacing(spacing.space_xxs)
+                    .push(widget::text(caret))
+                    .push(widget::text::heading(sec.name.clone())),
+            )
+            .on_press(Message::ToggleSection(sec.id))
+            .class(cosmic::theme::Button::Text)
+            .width(cosmic::iced::Length::Fill);
+
+            // When filtering, only show this project group if something matches.
+            let block = self.section_commands(sec, &needle, spacing);
+            if !needle.is_empty() && block.is_none() {
+                continue;
+            }
+            any_project = true;
+            projects = projects.push(header);
+            if !sec.collapsed || !needle.is_empty() {
+                if let Some(b) = block {
+                    projects = projects.push(b);
+                }
+            }
+        }
+        if !any_project {
+            projects = projects.push(empty_hint(if needle.is_empty() {
+                "No project sections yet. Add some in sections.json."
+            } else {
+                "No project commands match your filter."
+            }));
+        }
+
+        // Each column is its own independent scrollable, splitting the width evenly.
+        // (Built inline rather than via a closure — a closure can't express the
+        // borrow lifetime tying the column content to the returned container.) :: MRV
+        let recent_col = widget::container(
+            widget::scrollable(recent)
+                .height(cosmic::iced::Length::Fill)
+                .width(cosmic::iced::Length::Fill),
         )
-        .height(cosmic::iced::Length::Fill)
-        .width(cosmic::iced::Length::Fill);
+        .width(cosmic::iced::Length::FillPortion(1))
+        .height(cosmic::iced::Length::Fill);
+
+        let git_col = widget::container(
+            widget::scrollable(git)
+                .height(cosmic::iced::Length::Fill)
+                .width(cosmic::iced::Length::Fill),
+        )
+        .width(cosmic::iced::Length::FillPortion(1))
+        .height(cosmic::iced::Length::Fill);
+
+        let projects_col = widget::container(
+            widget::scrollable(projects)
+                .height(cosmic::iced::Length::Fill)
+                .width(cosmic::iced::Length::Fill),
+        )
+        .width(cosmic::iced::Length::FillPortion(1))
+        .height(cosmic::iced::Length::Fill);
+
+        let body = widget::row![]
+            .spacing(spacing.space_m)
+            .push(recent_col)
+            .push(git_col)
+            .push(projects_col)
+            .height(cosmic::iced::Length::Fill)
+            .width(cosmic::iced::Length::Fill);
 
         // THE WINDOW SIZING MODEL (matches Soulless-Launcher / cosmic-applibrary):
         //
@@ -544,6 +586,44 @@ impl QuickCommands {
         .width(cosmic::iced::Length::Fill)
         .height(cosmic::iced::Length::Fill)
         .into()
+    }
+
+    /// Render a section's commands as a click-to-copy list, filtered by `needle`.
+    /// Returns None when the filter is active and nothing in the section matches
+    /// (so the caller can skip the section/column entirely). Shared by the Git
+    /// column and each Projects group. :: MRV
+    fn section_commands<'a>(
+        &self,
+        section: &'a storage::Section,
+        needle: &str,
+        spacing: cosmic::cosmic_theme::Spacing,
+    ) -> Option<Element<'a, Message>> {
+        let matches: Vec<&Command> = section
+            .commands
+            .iter()
+            .filter(|c| {
+                needle.is_empty()
+                    || c.label.to_lowercase().contains(needle)
+                    || c.command.to_lowercase().contains(needle)
+            })
+            .collect();
+        if matches.is_empty() {
+            return None;
+        }
+        let mut inner = widget::column![].spacing(spacing.space_xxxs);
+        for cmd in matches {
+            inner = inner.push(command_row(cmd));
+        }
+        Some(
+            widget::container(inner)
+                .padding(cosmic::iced::Padding::from([
+                    0.0,
+                    0.0,
+                    0.0,
+                    spacing.space_s as f32,
+                ]))
+                .into(),
+        )
     }
 }
 
